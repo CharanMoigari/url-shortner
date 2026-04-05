@@ -1,0 +1,141 @@
+.dashboard-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-header {
+  background: white;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-left h1 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.header-left p {
+  color: #666;
+  font-size: 14px;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.create-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.create-section h2 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.create-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  align-items: stretch;
+}
+
+.create-form input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+  height: 56px;
+  line-height: 1.5;
+  width: 100%;
+}
+
+.create-form input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.create-form button {
+  white-space: nowrap;
+  padding: 12px 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.urls-section {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.urls-section h2 {
+  font-size: 20px;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.urls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .dashboard-main {
+    padding: 20px;
+  }
+
+  .create-form {
+    flex-direction: column;
+  }
+
+  .create-form .form-group {
+    flex-direction: column;
+  }
+
+  .create-form input,
+  .create-form button {
+    width: 100%;
+  }
+
+  .urls-grid {
+    grid-template-columns: 1fr;
+  }
+}

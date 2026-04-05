@@ -1,0 +1,133 @@
+.url-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.url-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+  transform: translateY(-4px);
+}
+
+.url-card-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-grow: 1;
+}
+
+.url-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.short-url a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  word-break: break-all;
+  transition: color 0.3s ease;
+}
+
+.short-url a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.original-url {
+  color: #666;
+  font-size: 13px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+.url-card-body {
+  padding: 16px;
+  background: #fafafa;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.url-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  color: #999;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #333;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.url-card-footer {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.btn-copy,
+.btn-share,
+.btn-delete {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-share:hover {
+  background: #27ae60;
+  color: white;
+  border-color: #27ae60;
+}
+
+.btn-delete:hover {
+  background: #e74c3c;
+  color: white;
+  border-color: #e74c3c;
+}
+
+@media (max-width: 480px) {
+  .url-card-body {
+    grid-template-columns: 1fr;
+  }
+
+  .url-card-footer {
+    flex-direction: column;
+  }
+
+  .btn-copy,
+  .btn-share,
+  .btn-delete {
+    width: 100%;
+  }
+}
