@@ -1,0 +1,35 @@
+services:
+  server:
+    build: ./server
+    container_name: url-shortener-server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: ${PORT:-5000}
+      NODE_ENV: ${NODE_ENV:-development}
+    networks:
+      - url-shortener-network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    command: npm run dev
+
+  client:
+    build: ./client
+    container_name: url-shortener-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    networks:
+      - url-shortener-network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: npm start
+
+networks:
+  url-shortener-network:
+    driver: bridge
