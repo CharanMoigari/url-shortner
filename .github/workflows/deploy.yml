@@ -13,20 +13,13 @@ jobs:
       # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Debug SSH Key
-        run: |
-          echo "===== START KEY ====="
-          echo "${{ secrets.EC2_SSH_KEY }}"
-          echo "===== END KEY ====="
 
-          echo "Line count:"
-          echo "${{ secrets.EC2_SSH_KEY }}" | wc -l
-            # 2️⃣ Docker Login
-            - name: Docker Login
-              uses: docker/login-action@v2
-              with:
-                username: ${{ secrets.DOCKER_USERNAME }}
-                password: ${{ secrets.DOCKER_PASSWORD }}
+      # 2️⃣ Docker Login
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       # 3️⃣ Build & Push Backend
       - name: Build and Push Backend
@@ -40,10 +33,12 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Create SSH key in workspace (IMPORTANT)
+      # 5️⃣ Create SSH Key safely (FIXED)
       - name: Create SSH Key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          cat << 'EOF' > ec2_key.pem
+${{ secrets.EC2_SSH_KEY }}
+EOF
           chmod 600 ec2_key.pem
 
       # 6️⃣ Deploy to EC2
