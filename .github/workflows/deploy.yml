@@ -43,17 +43,13 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Test SSH Connection
+      # 5️⃣ Setup SSH Key
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Test SSH Connection
-        run: |
-          ssh -v -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "whoami && echo 'SSH connection successful!' && uname -a"
 
       # 6️⃣ Deploy to EC2
       - name: Deploy to EC2
@@ -61,48 +57,57 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY_BASE64 }}
+          key_format: base64
+          port: 22
           envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
           script_stop: true
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           script: |
             set -e
             mkdir -p ~/url-shortener
             cd ~/url-shortener
-            printf '%s\n' \
-              'version: '"'"'3.8'"'"'' \
-              'services:' \
-              '  backend:' \
-              '    image: '$DOCKER_USERNAME'/url-shortener-backend:latest' \
-              '    container_name: url-shortener-backend' \
-              '    ports:' \
-              '      - "5000:5000"' \
-              '    environment:' \
-              '      MONGO_URI: '$MONGO_URI'' \
-              '      JWT_SECRET: '$JWT_SECRET'' \
-              '      NODE_ENV: production' \
-              '    restart: always' \
-              '    networks:' \
-              '      - url-shortener-network' \
-              '  frontend:' \
-              '    image: '$DOCKER_USERNAME'/url-shortener-frontend:latest' \
-              '    container_name: url-shortener-frontend' \
-              '    ports:' \
-              '      - "80:80"' \
-              '    depends_on:' \
-              '      - backend' \
-              '    restart: always' \
-              '    networks:' \
-              '      - url-shortener-network' \
-              'networks:' \
-              '  url-shortener-network:' \
-              '    driver: bridge' > docker-compose.yml
-            docker pull $DOCKER_USERNAME/url-shortener-backend:latest
-            docker pull $DOCKER_USERNAME/url-shortener-frontend:latest
+
+            cat > docker-compose.yml <<'EOF'
+            version: '3.8'
+            services:
+              backend:
+                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
+                container_name: url-shortener-backend
+                ports:
+                  - "5000:5000"
+                environment:
+                  MONGO_URI: ${MONGO_URI}
+                  JWT_SECRET: ${JWT_SECRET}
+                  NODE_ENV: production
+                restart: always
+                networks:
+                  - url-shortener-network
+
+              frontend:
+                image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
+                container_name: url-shortener-frontend
+                ports:
+                  - "80:80"
+                depends_on:
+                  - backend
+                restart: always
+                networks:
+                  - url-shortener-network
+
+            networks:
+              url-shortener-network:
+                driver: bridge
+            EOF
+
+            docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
+            docker pull ${DOCKER_USERNAME}/url-shortener-frontend:latest
+
             docker-compose down || true
             docker-compose up -d
+
             sleep 5
             docker-compose ps
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
