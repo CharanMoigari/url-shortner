@@ -33,46 +33,64 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Create SSH Key from base64
-      - name: Create SSH Key
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-      # 6️⃣ Verify Key (DEBUG STEP)
-      - name: Verify Key
-        run: |
-          echo "Size:"
-          ls -l ec2_key.pem
-
-          echo "Start:"
-          head -1 ec2_key.pem
-
-          echo "End:"
-          tail -1 ec2_key.pem
-
-      # 7️⃣ Deploy to EC2
+      # 5️⃣ Deploy to EC2 (FINAL FIX)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key_path: ec2_key.pem
+          key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           debug: true
           script: |
-            echo "✅ Connected"
+            set -e
+
+            echo "✅ Connected to EC2"
             whoami
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
 
+            # Create docker-compose file
+            cat > docker-compose.yml <<EOF
+            version: '3.8'
+            services:
+              backend:
+                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
+                container_name: url-shortener-backend
+                ports:
+                  - "5000:5000"
+                environment:
+                  MONGO_URI: ${MONGO_URI}
+                  JWT_SECRET: ${JWT_SECRET}
+                  NODE_ENV: production
+                restart: always
+
+              frontend:
+                image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
+                container_name: url-shortener-frontend
+                ports:
+                  - "80:80"
+                depends_on:
+                  - backend
+                restart: always
+
+            networks:
+              default:
+                driver: bridge
+            EOF
+
+            # Pull latest images
             docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
             docker pull ${DOCKER_USERNAME}/url-shortener-frontend:latest
 
+            # Restart containers
             docker-compose down || true
             docker-compose up -d
 
+            sleep 5
             docker ps
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
