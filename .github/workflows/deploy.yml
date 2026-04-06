@@ -10,38 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Docker Login
+      # 2️⃣ Docker login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3️⃣ Build & Push Backend
-      - name: Build and Push Backend
+      # 3️⃣ Build backend
+      - name: Build Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
-      # 4️⃣ Build & Push Frontend
-      - name: Build and Push Frontend
+      # 4️⃣ Build frontend
+      - name: Build Frontend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Create SSH Key safely (FIXED)
+      # 5️⃣ Decode SSH key (IMPORTANT)
       - name: Create SSH Key
         run: |
-          cat << 'EOF' > ec2_key.pem
-          ${{ secrets.EC2_SSH_KEY }}
-          EOF
+          echo "${{ secrets.EC2_SSH_KEY_BASE64 }}" | base64 -d > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      # 6️⃣ Deploy to EC2
+      # 6️⃣ Deploy
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -49,43 +47,13 @@ jobs:
           username: ubuntu
           key_path: ec2_key.pem
           port: 22
-          script_stop: true
+          debug: true
           script: |
-            set -e
-
-            echo "✅ Connected to EC2"
+            echo "✅ Connected"
             whoami
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
-
-            cat > docker-compose.yml <<EOF
-            version: '3.8'
-            services:
-              backend:
-                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
-                container_name: url-shortener-backend
-                ports:
-                  - "5000:5000"
-                environment:
-                  MONGO_URI: ${MONGO_URI}
-                  JWT_SECRET: ${JWT_SECRET}
-                  NODE_ENV: production
-                restart: always
-
-              frontend:
-                image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
-                container_name: url-shortener-frontend
-                ports:
-                  - "80:80"
-                depends_on:
-                  - backend
-                restart: always
-
-            networks:
-              default:
-                driver: bridge
-            EOF
 
             docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
             docker pull ${DOCKER_USERNAME}/url-shortener-frontend:latest
@@ -93,9 +61,6 @@ jobs:
             docker-compose down || true
             docker-compose up -d
 
-            sleep 5
-            docker-compose ps
+            docker ps
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
