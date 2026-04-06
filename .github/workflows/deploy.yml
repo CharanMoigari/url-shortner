@@ -43,14 +43,28 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Deploy to EC2
+      # 5️⃣ Test SSH Connection
+      - name: Test SSH Connection
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          debug: true
+          script: |
+            whoami
+            echo "SSH connection successful!"
+            uname -a
+
+      # 6️⃣ Deploy to EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
+          script_stop: true
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
