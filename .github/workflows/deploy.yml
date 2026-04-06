@@ -39,7 +39,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_KEY }}   # ✅ RAW PEM KEY (NOT BASE64)
           port: 22
           debug: true
           script: |
