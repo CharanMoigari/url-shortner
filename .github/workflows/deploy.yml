@@ -33,12 +33,11 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Setup SSH Key (IMPORTANT)
-      - name: Setup SSH Key
+      # 5️⃣ Create SSH key in workspace (IMPORTANT)
+      - name: Create SSH Key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
 
       # 6️⃣ Deploy to EC2
       - name: Deploy to EC2
@@ -46,7 +45,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key_path: ~/.ssh/id_rsa
+          key_path: ec2_key.pem
           port: 22
           script_stop: true
           script: |
