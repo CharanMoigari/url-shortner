@@ -44,17 +44,16 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
       # 5️⃣ Test SSH Connection
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
       - name: Test SSH Connection
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true
-          script: |
-            whoami
-            echo "SSH connection successful!"
-            uname -a
+        run: |
+          ssh -v -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "whoami && echo 'SSH connection successful!' && uname -a"
 
       # 6️⃣ Deploy to EC2
       - name: Deploy to EC2
