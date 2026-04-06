@@ -39,7 +39,34 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}   # ✅ RAW PEM KEY (NOT BASE64)
+          key:  | 
+              -----BEGIN RSA PRIVATE KEY-----
+              MIIEogIBAAKCAQEAv8pl+FcKNCY/xWlcdPKjY5+MAbMFt62ARIFi2IQuRiOps3tJ
+              JQsCA8VcZo/1qdsFadDlEGyFpkAu5ChTWiCQTpbfh8Mru3aojD9j94pRUSY2W0pV
+              bfr8o3alC7T0TiFlvC9cKkk8f0uXraT8oMSGEpVOe5d/LEuWD91Ole/UFJ82amJu
+              i1eoqZFTfk1ZtawqKm+vW+D1Y//ogWdrUIf5pZ3p7+EB0cABJ3yURi469nWiy9VC
+              oGSOAozt0/0xWy29snz+38FTzgw9B/Zx4HTwji+4/HkgWNX5wiedcOjTwl5ecRAZ
+              F1rSqXE8Q0/yLvq+aPh248qBHtWKM5gu7df+QQIDAQABAoIBACloBA3SlNRfcaMo
+              NRrWi6nldy+iu9hE8A1aNcHy/56K8odaVZdWwg+YW3OVHv+V1pxayil6lHwpHTaK
+              8jviDeW5sva3j0iAvLDSur1lslqnulKJQNpmtoaABe/6GEiJ81Hmk6pZd2MwKcYG
+              ebgn1Z5Ld889DOq+Qt6X8/Bw/8OXn7MplNHmPV1mifu4xOr7yxr0XQgxo7tHIolC
+              /Xvhpf/BA9hOhaXBjwmTIsAeiPFZ5+qxgBkDuMjIBOCUI/Wu29320bZ/j16UbNe5
+              t5pBU9y1cgnk3jbe/IwJwL/FDEKTbFsgM8YkMWQ82dS039yPKqa2E0esrnBugezg
+              XXaFmXECgYEA+JoT5Ig8/atKZsl3p440zilRk2GEkyniI3OfDhebiyb0FaVyPqIW
+              otQ4VRDAuBOOw7vlKR6CXR1vAfI3beSWTIyk+5uMxfvD7c55JXzf0INlDIzktdxA
+              /+/VlOjC3JIwYXOT17L4MhYNYLBgS1sRDADw3LLhVh57MFwXuLe6jN0CgYEAxX+E
+              Cnb9Xs88kYMehwGoIw07RpPHVWsmsWpkWY1A2z7Um9WUmJcBhaOmvXnnurlO9NXn
+              1biZu0fISu66FW2syC3YvglJ/ywnpMjLkD0ixjoiyrMWRL/CF7YEb4bUx/Qrnoiz
+              uxk6FsVAGrohmLmyBT0wp+Rgoo8Smup57IrqnrUCgYBSFk5LP9Ej0dOXbR7dbM9y
+              46HUEHc+QK4zFpKGjLUHla0zGJZIqCzhR0HylL2OCqcxanGYykIxjO6CrgAvgTM/
+              w5EWo54wIZnohCzse/dLWpebNUqv4jJ0UDUuHk15l6vyAb/nkWjy4OU58ANb3o4a
+              cJUXytktHpN+vGn4zHIE4QKBgGnWoTs+cx/I7UuJueVd1O4b3CVBcrRq/MxdGLQJ
+              B7W24Rc2CTEQ06b7gZLO7olZX1/D9j7Jc9Eycbr+Xki3gr2wHBQTRE10KzaayMRe
+              jvEuHJEGEiv7m5c7WvsthYA2cN2/opnktgWX5XetQe3nregy141RzRuwkqbkezxx
+              YbR1AoGAZpWQQI6JcAT9H+X3UO4iaZsG9+AkqaJhJG05AN0mXSxe1WzGXV4FzAVU
+              Ed030kORLJ39h95XsjYt4dNqol3YRYPfDbokjcxdDeefnZQEt/UTlwdqq5ouDtS8
+              d+1rmcCuMcUsqBxHl1E2wTbLA+2+2BYIOdCuKpwf1spDIzxqnsc=
+              -----END RSA PRIVATE KEY-----
           port: 22
           debug: true
           script: |
