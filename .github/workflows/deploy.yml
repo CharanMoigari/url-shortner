@@ -37,8 +37,8 @@ jobs:
       - name: Create SSH Key
         run: |
           cat << 'EOF' > ec2_key.pem
-${{ secrets.EC2_SSH_KEY }}
-EOF
+          ${{ secrets.EC2_SSH_KEY }}
+          EOF
           chmod 600 ec2_key.pem
 
       # 6️⃣ Deploy to EC2
