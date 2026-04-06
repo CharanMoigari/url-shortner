@@ -13,13 +13,20 @@ jobs:
       # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Debug SSH Key
+        run: |
+          echo "===== START KEY ====="
+          echo "${{ secrets.EC2_SSH_KEY }}"
+          echo "===== END KEY ====="
 
-      # 2️⃣ Docker Login
-      - name: Docker Login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          echo "Line count:"
+          echo "${{ secrets.EC2_SSH_KEY }}" | wc -l
+            # 2️⃣ Docker Login
+            - name: Docker Login
+              uses: docker/login-action@v2
+              with:
+                username: ${{ secrets.DOCKER_USERNAME }}
+                password: ${{ secrets.DOCKER_PASSWORD }}
 
       # 3️⃣ Build & Push Backend
       - name: Build and Push Backend
