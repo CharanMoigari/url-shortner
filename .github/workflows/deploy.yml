@@ -1,4 +1,4 @@
-name: Fullstack CI/CD
+name: Production CI/CD
 
 on:
   push:
@@ -10,40 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Docker Login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3️⃣ Build & Push Backend
-      - name: Build Backend
+      - name: Build & Push Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
-      # 4️⃣ Build & Push Frontend
-      - name: Build Frontend
+      - name: Build & Push Frontend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Copy docker-compose to EC2
-      - name: Copy docker-compose to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "/home/ubuntu/url-shortener"
-
-      # 6️⃣ Deploy on EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -55,14 +40,18 @@ jobs:
 
             cd ~/url-shortener
 
-            echo "Stopping old containers..."
-            docker-compose down || true
+            echo "Creating env file..."
+            cat > .env <<EOF
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
 
-            echo "Pulling latest images..."
+            echo "Pulling images..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest
 
-            echo "Starting containers..."
+            echo "Restarting containers..."
+            docker-compose down || true
             docker-compose up -d
 
             docker ps

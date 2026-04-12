@@ -2,24 +2,20 @@ version: "3.8"
 
 services:
   backend:
-    image: ${DOCKER_USERNAME}/url-shortener-backend:latest
-    container_name: url-shortener-backend
+    image: yourdockerhubusername/url-shortener-backend:latest
+    container_name: url-shortener-server
     restart: always
     ports:
       - "5000:5000"
-    environment:
-      MONGO_URI: ${MONGO_URI}
-      JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: production
+    env_file:
+      - .env
 
   frontend:
-    image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
-    container_name: url-shortener-frontend
+    image: yourdockerhubusername/url-shortener-frontend:latest
+    container_name: url-shortener-client
     restart: always
     ports:
       - "3000:80"
-    depends_on:
-      - backend
 
 networks:
   default:
