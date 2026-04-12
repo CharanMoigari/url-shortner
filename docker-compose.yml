@@ -2,15 +2,15 @@ version: "3.8"
 
 services:
   backend:
-    image: YOUR_DOCKER_USERNAME/url-shortener-backend:latest
+    image: ${BACKEND_IMAGE}
     container_name: url-shortener-backend
-    restart: always
     ports:
       - "5000:5000"
+    restart: always
 
   frontend:
-    image: YOUR_DOCKER_USERNAME/url-shortener-frontend:latest
+    image: ${FRONTEND_IMAGE}
     container_name: url-shortener-frontend
-    restart: always
     ports:
       - "3000:80"
+    restart: always
