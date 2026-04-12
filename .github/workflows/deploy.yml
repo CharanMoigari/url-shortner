@@ -1,4 +1,4 @@
-name: Deploy
+name: Fullstack CI/CD
 
 on:
   push:
@@ -10,53 +10,116 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout code
-      - name: Checkout
+      # 1️⃣ Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Docker login
+      # 2️⃣ Docker Login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build & Push Backend
-      - name: Build & Push Backend
+      # 3️⃣ Build & Push Backend
+      - name: Build Backend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest ./server
-          docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
+          docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
-      # Build & Push Frontend
-      - name: Build & Push Frontend
+      # 4️⃣ Build & Push Frontend
+      - name: Build Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest ./client
-          docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
+          docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # Deploy to EC2
-      - name: Deploy
+      # 🔍 Debug Host
+      - name: Debug Host
+        run: echo "EC2_HOST = ${{ secrets.EC2_HOST }}"
+
+      # 🌐 Test Connectivity
+      - name: Test Connectivity
+        run: |
+          echo "Testing EC2 connection..."
+          ping -c 2 ${{ secrets.EC2_HOST }} || true
+          nc -zv ${{ secrets.EC2_HOST }} 22 || true
+
+      # 🚀 Deploy to EC2
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          debug: true
+
+          # ✅ PASS ENV VARIABLES
+          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
+
           script: |
             set -e
 
+            echo "✅ Connected to EC2"
+            whoami
+
+            # 🔧 Install Docker if not exists
+            if ! command -v docker &> /dev/null
+            then
+              echo "Installing Docker..."
+              sudo apt update
+              sudo apt install -y docker.io docker-compose-plugin
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ubuntu
+            fi
+
+            sudo systemctl start docker
+
+            mkdir -p ~/url-shortener
             cd ~/url-shortener
 
-            echo "Pulling latest images..."
-            docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest
+            # Create docker-compose file
+            cat > docker-compose.yml <<EOF
+            version: '3.8'
+            services:
+              backend:
+                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
+                container_name: url-shortener-backend
+                ports:
+                  - "5000:5000"
+                environment:
+                  MONGO_URI: ${MONGO_URI}
+                  JWT_SECRET: ${JWT_SECRET}
+                  NODE_ENV: production
+                restart: always
 
-            echo "Creating env file..."
-            cat > .env <<EOF
-            BACKEND_IMAGE=${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest
-            FRONTEND_IMAGE=${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest
+              frontend:
+                image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
+                container_name: url-shortener-frontend
+                ports:
+                  - "3000:80"
+                depends_on:
+                  - backend
+                restart: always
+
+            networks:
+              default:
+                driver: bridge
             EOF
 
-            echo "Restarting containers..."
-            docker-compose --env-file .env down || true
-            docker-compose --env-file .env up -d
+            # Pull latest images
+            sudo docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
+            sudo docker pull ${DOCKER_USERNAME}/url-shortener-frontend:latest
 
-            docker ps
+            # Restart containers
+            sudo docker-compose down || true
+            sudo docker-compose up -d
+
+            sleep 5
+            sudo docker ps
+
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
