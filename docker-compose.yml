@@ -3,7 +3,8 @@ version: "3.8"
 services:
   backend:
     image: ${DOCKER_USERNAME}/url-shortener-backend:latest
-    container_name: url-shortener-server
+    container_name: url-shortener-backend
+    restart: always
     ports:
       - "5000:5000"
     environment:
@@ -13,9 +14,10 @@ services:
 
   frontend:
     image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
-    container_name: url-shortener-client
+    container_name: url-shortener-frontend
+    restart: always
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - backend
 
