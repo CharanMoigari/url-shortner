@@ -45,9 +45,9 @@ app.use((req, res) => {
 });
 
 // Error handler middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+app.use((req, res, next) => {
+  console.log("REQUEST:", req.method, req.url);
+  next();
 });
 
 // Start server
