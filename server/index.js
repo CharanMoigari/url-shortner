@@ -12,15 +12,7 @@ const app = express();
 // =====================
 // CORS
 // =====================
-app.use(cors({
-  origin: [
-    "http://16.171.240.13:3000",
-    "http://localhost:3000"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+app.use(cors())
 
 // IMPORTANT: remove app.options("*") completely
 
