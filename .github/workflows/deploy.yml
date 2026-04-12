@@ -1,4 +1,4 @@
-name: Production CI/CD
+name: Deploy
 
 on:
   push:
@@ -10,25 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2️⃣ Docker Login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 3️⃣ Build & Push Backend Image
       - name: Build & Push Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
+      # 4️⃣ Build & Push Frontend Image
       - name: Build & Push Frontend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
+      # 5️⃣ Deploy on EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -38,20 +43,17 @@ jobs:
           script: |
             set -e
 
+            echo "🚀 Deploying application..."
+
             cd ~/url-shortener
 
-            echo "Creating env file..."
-            cat > .env <<EOF
-            MONGO_URI=${{ secrets.MONGO_URI }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            EOF
-
-            echo "Pulling images..."
+            echo "📦 Pulling latest images..."
             docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend:latest
 
-            echo "Restarting containers..."
+            echo "🔄 Restarting containers..."
             docker-compose down || true
             docker-compose up -d
 
+            echo "✅ Deployment complete"
             docker ps

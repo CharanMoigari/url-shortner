@@ -2,21 +2,15 @@ version: "3.8"
 
 services:
   backend:
-    image: yourdockerhubusername/url-shortener-backend:latest
-    container_name: url-shortener-server
+    image: YOUR_DOCKER_USERNAME/url-shortener-backend:latest
+    container_name: url-shortener-backend
     restart: always
     ports:
       - "5000:5000"
-    env_file:
-      - .env
 
   frontend:
-    image: yourdockerhubusername/url-shortener-frontend:latest
-    container_name: url-shortener-client
+    image: YOUR_DOCKER_USERNAME/url-shortener-frontend:latest
+    container_name: url-shortener-frontend
     restart: always
     ports:
       - "3000:80"
-
-networks:
-  default:
-    driver: bridge
