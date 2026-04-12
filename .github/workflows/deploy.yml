@@ -33,7 +33,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 5️⃣ Deploy to EC2 (FINAL FIX)
+      # 5️⃣ Deploy to EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
