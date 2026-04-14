@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         host:
-          - ${{ secrets.EC2_HOST_1 }}
+          - ${{ secrets.EC2_HOST }}
           - ${{ secrets.EC2_HOST_2 }}
           - ${{ secrets.EC2_HOST_3 }}
 
