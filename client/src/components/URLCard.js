@@ -3,8 +3,8 @@ import config from '../config';
 import './URLCard.css';
 
 const URLCard = ({ url, onDelete, onCopy }) => {
-  const baseUrl = config.API_URL;
-  const shortUrl = `${baseUrl}/${url.shortId}`;
+const baseUrl = config.BASE_URL;
+const shortUrl = `${baseUrl}/${url.shortId}`;
   const createdDate = new Date(url.createdAt).toLocaleDateString();
 
   return (
