@@ -1,5 +1,5 @@
 const os = require('os');
-const instanceName = os.hostname();
+const axios = require("axios");
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -53,6 +53,26 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running' });
 });
 
+
+async function getInstanceId() {
+  try {
+    const response = await axios.get(
+      "http://169.254.169.254/latest/meta-data/instance-id",
+      { timeout: 1000 }
+    );
+    return response.data;
+  } catch (err) {
+    return "metadata-not-available";
+  }
+}
+router.get("/whoami", async (req, res) => {
+  const instanceId = await getInstanceId();
+
+  res.json({
+    instanceId: instanceId,
+    containerId: os.hostname()
+  });
+});
 // =====================
 // 404 handler
 // =====================
