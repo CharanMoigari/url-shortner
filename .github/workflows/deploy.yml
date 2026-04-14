@@ -74,6 +74,7 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
+                  SHORT_URL_BASE: http://url-shortener-alb-1413916545.eu-north-1.elb.amazonaws.com
                 restart: always
             EOF
 
@@ -121,7 +122,7 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
-                  SHORT_URL_BASE:http://url-shortener-alb-1413916545.eu-north-1.elb.amazonaws.com
+                  SHORT_URL_BASE: http://url-shortener-alb-1413916545.eu-north-1.elb.amazonaws.com
                 restart: always
             EOF
 
@@ -169,6 +170,7 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
+                  SHORT_URL_BASE: http://url-shortener-alb-1413916545.eu-north-1.elb.amazonaws.com
                 restart: always
             EOF
 
