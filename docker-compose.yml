@@ -3,7 +3,7 @@ services:
     build: ./server
     container_name: url-shortener-server
     ports:
-      - "5000:5000"
+      - "80:5000"
     env_file:
       - ./server/.env
     environment:
