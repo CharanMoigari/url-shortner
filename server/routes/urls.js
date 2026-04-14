@@ -94,7 +94,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
         shortId: url.shortId,
         shortUrl: `${process.env.SHORT_URL_BASE || 'http://localhost:5000'}/${url.shortId}`,
         clicks: url.clicks,
-        createdAt: url.createdAt
+        createdAt: url.createdAt,
+          containerId: require('os').hostname(),
+  instanceId: instanceId?.data || "N/A"
       }
     });
   } catch (error) {
