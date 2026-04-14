@@ -49,11 +49,6 @@ app.use('/', redirectRoutes);
 // =====================
 // Health check
 // =====================
-app.get('/api/health', (req, res) => {
-  res.json({ message: 'Server is running' });
-});
-
-
 async function getInstanceId() {
   try {
     const response = await axios.get(
@@ -65,15 +60,10 @@ async function getInstanceId() {
     return "metadata-not-available";
   }
 }
-
-// FIXED ROUTE
-app.get("/whoami", async (req, res) => {
+app.get('/api/health', async (req, res) => {
   const instanceId = await getInstanceId();
 
-  res.json({
-    instanceId,
-    containerId: os.hostname()
-  });
+  res.json({ message: 'Server is running', instanceId, containerId: os.hostname() });
 });
 // =====================
 // 404 handler
