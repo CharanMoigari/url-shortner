@@ -49,14 +49,33 @@ app.use('/', redirectRoutes);
 // =====================
 // Health check
 // =====================
+
 async function getInstanceId() {
   try {
+    // Step 1: get token
+    const token = await axios.put(
+      "http://169.254.169.254/latest/api/token",
+      null,
+      {
+        headers: {
+          "X-aws-ec2-metadata-token-ttl-seconds": "21600"
+        }
+      }
+    );
+
+    // Step 2: use token
     const response = await axios.get(
       "http://169.254.169.254/latest/meta-data/instance-id",
-      { timeout: 1000 }
+      {
+        headers: {
+          "X-aws-ec2-metadata-token": token.data
+        }
+      }
     );
+
     return response.data;
   } catch (err) {
+    console.log("Metadata error:", err.message);
     return "metadata-not-available";
   }
 }
