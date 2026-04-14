@@ -41,7 +41,8 @@ router.post('/', authMiddleware, async (req, res) => {
         shortId: url.shortId,
         shortUrl: `${process.env.SHORT_URL_BASE || 'http://localhost:5000'}/${url.shortId}`,
         createdAt: url.createdAt,
-        handledBy: instanceName
+      containerId: require('os').hostname(),
+  instanceId: instanceId?.data || "N/A"
       }
     });
   } catch (error) {
