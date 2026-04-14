@@ -1,3 +1,5 @@
+const os = require('os');
+const instanceName = os.hostname();
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');

@@ -33,94 +33,137 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 🔍 Debug Host
-      - name: Debug Host
-        run: echo "EC2_HOST = ${{ secrets.EC2_HOST }}"
-
-      # 🌐 Test Connectivity
-      - name: Test Connectivity
-        run: |
-          echo "Testing EC2 connection..."
-          ping -c 2 ${{ secrets.EC2_HOST }} || true
-          nc -zv ${{ secrets.EC2_HOST }} 22 || true
-
-      # 🚀 Deploy to EC2
-      - name: Deploy to EC2
+      # ===============================
+      # 🚀 DEPLOY TO EC2-1
+      # ===============================
+      - name: Deploy to EC2-1
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          debug: true
-
           envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
 
           script: |
             set -e
+            echo "Deploying to EC2-1"
 
-            echo "✅ Connected to EC2"
-            whoami
-
-            # 🔧 Install Docker + docker-compose
             if ! command -v docker &> /dev/null
             then
-              echo "Installing Docker..."
-
               sudo apt update
               sudo apt install -y docker.io docker-compose
-
               sudo systemctl start docker
               sudo systemctl enable docker
-              sudo usermod -aG docker ubuntu
             fi
-
-            sudo systemctl start docker
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
 
-            # Create docker-compose file
             cat > docker-compose.yml <<EOF
             version: '3.8'
             services:
               backend:
                 image: ${DOCKER_USERNAME}/url-shortener-backend:latest
-                container_name: url-shortener-backend
+                container_name: backend
                 ports:
                   - "5000:5000"
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
-                  NODE_ENV: production
                 restart: always
-
-              frontend:
-                image: ${DOCKER_USERNAME}/url-shortener-frontend:latest
-                container_name: url-shortener-frontend
-                ports:
-                  - "3000:80"
-                depends_on:
-                  - backend
-                restart: always
-
-            networks:
-              default:
-                driver: bridge
             EOF
 
-            # Pull latest images
             sudo docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
-            sudo docker pull ${DOCKER_USERNAME}/url-shortener-frontend:latest
-
-            # Restart containers
             sudo docker-compose down || true
             sudo docker-compose up -d
 
-            sleep 5
-            sudo docker ps
+      # ===============================
+      # 🚀 DEPLOY TO EC2-2
+      # ===============================
+      - name: Deploy to EC2-2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST_2 }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
 
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          script: |
+            set -e
+            echo "Deploying to EC2-2"
+
+            if ! command -v docker &> /dev/null
+            then
+              sudo apt update
+              sudo apt install -y docker.io docker-compose
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            fi
+
+            mkdir -p ~/url-shortener
+            cd ~/url-shortener
+
+            cat > docker-compose.yml <<EOF
+            version: '3.8'
+            services:
+              backend:
+                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
+                container_name: backend
+                ports:
+                  - "5000:5000"
+                environment:
+                  MONGO_URI: ${MONGO_URI}
+                  JWT_SECRET: ${JWT_SECRET}
+                restart: always
+            EOF
+
+            sudo docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
+            sudo docker-compose down || true
+            sudo docker-compose up -d
+
+      # ===============================
+      # 🚀 DEPLOY TO EC2-3
+      # ===============================
+      - name: Deploy to EC2-3
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{secrets.EC2_HOST_3 }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
+
+          script: |
+            set -e
+            echo "Deploying to EC2-3"
+
+            if ! command -v docker &> /dev/null
+            then
+              sudo apt update
+              sudo apt install -y docker.io docker-compose
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            fi
+
+            mkdir -p ~/url-shortener
+            cd ~/url-shortener
+
+            cat > docker-compose.yml <<EOF
+            version: '3.8'
+            services:
+              backend:
+                image: ${DOCKER_USERNAME}/url-shortener-backend:latest
+                container_name: backend
+                ports:
+                  - "5000:5000"
+                environment:
+                  MONGO_URI: ${MONGO_URI}
+                  JWT_SECRET: ${JWT_SECRET}
+                restart: always
+            EOF
+
+            sudo docker pull ${DOCKER_USERNAME}/url-shortener-backend:latest
+            sudo docker-compose down || true
+            sudo docker-compose up -d

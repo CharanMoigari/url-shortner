@@ -1,3 +1,6 @@
+
+const os = require('os');
+const instanceName = os.hostname();
 const express = require('express');
 const URLModel = require('../models/URL');
 const authMiddleware = require('../middleware/auth');
@@ -37,7 +40,8 @@ router.post('/', authMiddleware, async (req, res) => {
         originalUrl: url.originalUrl,
         shortId: url.shortId,
         shortUrl: `${process.env.SHORT_URL_BASE || 'http://localhost:5000'}/${url.shortId}`,
-        createdAt: url.createdAt
+        createdAt: url.createdAt,
+        handledBy: instanceName
       }
     });
   } catch (error) {
