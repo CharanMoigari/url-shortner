@@ -65,11 +65,13 @@ async function getInstanceId() {
     return "metadata-not-available";
   }
 }
-router.get("/whoami", async (req, res) => {
+
+// FIXED ROUTE
+app.get("/whoami", async (req, res) => {
   const instanceId = await getInstanceId();
 
   res.json({
-    instanceId: instanceId,
+    instanceId,
     containerId: os.hostname()
   });
 });
