@@ -10,26 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2️⃣ Docker Login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 3️⃣ Build Backend
       - name: Build Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
+      # 4️⃣ Build Frontend
       - name: Build Frontend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
-      # 🚀 EC2-1
+      # ===============================
+      # 🚀 DEPLOY TO EC2-1
+      # ===============================
       - name: Deploy to EC2-1
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -37,10 +43,15 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
           script: |
             set -e
+
+            DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+            MONGO_URI="${{ secrets.MONGO_URI }}"
+            JWT_SECRET="${{ secrets.JWT_SECRET }}"
+
             echo "Deploying to EC2-1"
+            echo "DOCKER_USERNAME=$DOCKER_USERNAME"
 
             if ! command -v docker &> /dev/null
             then
@@ -70,7 +81,9 @@ jobs:
             sudo docker-compose down || true
             sudo docker-compose up -d
 
-      # 🚀 EC2-2
+      # ===============================
+      # 🚀 DEPLOY TO EC2-2
+      # ===============================
       - name: Deploy to EC2-2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -78,9 +91,13 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
           script: |
             set -e
+
+            DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+            MONGO_URI="${{ secrets.MONGO_URI }}"
+            JWT_SECRET="${{ secrets.JWT_SECRET }}"
+
             echo "Deploying to EC2-2"
 
             if ! command -v docker &> /dev/null
@@ -111,7 +128,9 @@ jobs:
             sudo docker-compose down || true
             sudo docker-compose up -d
 
-      # 🚀 EC2-3
+      # ===============================
+      # 🚀 DEPLOY TO EC2-3
+      # ===============================
       - name: Deploy to EC2-3
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -119,9 +138,13 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
-          envs: DOCKER_USERNAME,MONGO_URI,JWT_SECRET
           script: |
             set -e
+
+            DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+            MONGO_URI="${{ secrets.MONGO_URI }}"
+            JWT_SECRET="${{ secrets.JWT_SECRET }}"
+
             echo "Deploying to EC2-3"
 
             if ! command -v docker &> /dev/null
