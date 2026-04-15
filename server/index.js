@@ -80,9 +80,9 @@ async function getInstanceId() {
   }
 }
 app.get('/api/health', async (req, res) => {
-  const instanceId = await getInstanceId();
+  //const instanceId = await getInstanceId();
 
-  res.json({ message: 'Server is running', instanceId, containerId: os.hostname() });
+  res.json({ message: 'Server is running'});
 });
 // =====================
 // 404 handler
