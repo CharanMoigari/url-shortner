@@ -7,9 +7,7 @@ const redisClient = require("../config/redis");
 const router = express.Router();
 
 /**
- * =====================
  * CREATE SHORT URL
- * =====================
  */
 router.post("/", authMiddleware, async (req, res) => {
   try {
@@ -20,24 +18,25 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Original URL is required" });
     }
 
-    // Validate URL
     try {
       new URL(originalUrl);
     } catch {
       return res.status(400).json({ error: "Invalid URL format" });
     }
 
-    const url = new URLModel({
-      originalUrl,
-      userId,
-    });
-
+    const url = new URLModel({ originalUrl, userId });
     await url.save();
 
-    // 🔥 Cache in Redis
-    await redisClient.set(url.shortId, url.originalUrl, {
-      EX: 3600,
-    });
+    // Redis cache (safe)
+    try {
+      if (redisClient.isOpen) {
+        await redisClient.set(url.shortId, url.originalUrl, {
+          EX: 3600,
+        });
+      }
+    } catch (err) {
+      console.log("Redis SET error:", err.message);
+    }
 
     res.status(201).json({
       message: "Short URL created successfully",
@@ -45,9 +44,7 @@ router.post("/", authMiddleware, async (req, res) => {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl: `${
-          process.env.SHORTURL || "http://localhost:5000"
-        }/r/${url.shortId}`,   // ✅ FIXED
+        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
         createdAt: url.createdAt,
         containerId: os.hostname(),
       },
@@ -58,9 +55,7 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 /**
- * =====================
  * GET ALL URLS
- * =====================
  */
 router.get("/", authMiddleware, async (req, res) => {
   try {
@@ -68,39 +63,25 @@ router.get("/", authMiddleware, async (req, res) => {
 
     const urls = await URLModel.find({ userId }).sort({ createdAt: -1 });
 
-    const response = await Promise.all(
-      urls.map(async (url) => {
-        const cached = await redisClient.get(url.shortId);
-
-        return {
-          id: url._id,
-          originalUrl: url.originalUrl,
-          shortId: url.shortId,
-          shortUrl: `${process.env.BASE_URL}/${url.shortId}`,
-          clicks: url.clicks,
-          createdAt: url.createdAt,
-
-          // 🔥 CACHE INFO ONLY
-          cacheHit: cached ? true : false
-        };
-      })
-    );
-
     res.status(200).json({
       message: "URLs retrieved successfully",
-      count: response.length,
-      urls: response
+      count: urls.length,
+      urls: urls.map((url) => ({
+        id: url._id,
+        originalUrl: url.originalUrl,
+        shortId: url.shortId,
+        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
+        clicks: url.clicks,
+        createdAt: url.createdAt,
+      })),
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 /**
- * =====================
- * GET SINGLE URL (REDIS CACHE)
- * =====================
+ * GET SINGLE URL (CACHE HIT/MISS)
  */
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
@@ -114,45 +95,45 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // 🔥 Check Redis
-    const cached = await redisClient.get(url.shortId);
+    let cached = null;
+    let cacheHit = false;
 
-    if (cached) {
-      return res.status(200).json({
-        message: "URL retrieved successfully (CACHE HIT)",
-        url: {
-          id: url._id,
-          originalUrl: cached,
-          shortId: url.shortId,
-          shortUrl: `${
-            process.env.SHORTURL || "http://localhost:5000"
-          }/r/${url.shortId}`,   // ✅ FIXED
-          clicks: url.clicks,
-          createdAt: url.createdAt,
-          containerId: os.hostname(),
-          cacheHit: true,
-        },
-      });
+    // SAFE REDIS GET
+    try {
+      if (redisClient.isOpen) {
+        cached = await redisClient.get(url.shortId);
+        if (cached) cacheHit = true;
+      }
+    } catch (err) {
+      console.log("Redis GET error:", err.message);
     }
 
-    // 🔥 Cache miss → store
-    await redisClient.set(url.shortId, url.originalUrl, {
-      EX: 3600,
-    });
+    // If miss → set cache
+    if (!cacheHit) {
+      try {
+        if (redisClient.isOpen) {
+          await redisClient.set(url.shortId, url.originalUrl, {
+            EX: 3600,
+          });
+        }
+      } catch (err) {
+        console.log("Redis SET error:", err.message);
+      }
+    }
 
     res.status(200).json({
-      message: "URL retrieved successfully (CACHE MISS)",
+      message: cacheHit
+        ? "URL retrieved successfully (CACHE HIT)"
+        : "URL retrieved successfully (CACHE MISS)",
       url: {
         id: url._id,
-        originalUrl: url.originalUrl,
+        originalUrl: cacheHit ? cached : url.originalUrl,
         shortId: url.shortId,
-        shortUrl: `${
-          process.env.SHORTURL || "http://localhost:5000"
-        }/r/${url.shortId}`,   // ✅ FIXED
+        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
         containerId: os.hostname(),
-        cacheHit: false,
+        cacheHit,
       },
     });
   } catch (error) {
@@ -161,9 +142,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 });
 
 /**
- * =====================
  * DELETE URL
- * =====================
  */
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
@@ -177,8 +156,13 @@ router.delete("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // 🔥 Remove from Redis
-    await redisClient.del(url.shortId);
+    try {
+      if (redisClient.isOpen) {
+        await redisClient.del(url.shortId);
+      }
+    } catch (err) {
+      console.log("Redis DEL error:", err.message);
+    }
 
     await URLModel.deleteOne({ _id: req.params.id });
 
