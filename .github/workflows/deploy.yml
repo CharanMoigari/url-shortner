@@ -70,7 +70,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
-                  SHORTURL: ${SHORTURL}
+                  BASE_URL: ${SHORTURL}
                 restart: always
             EOF
 
@@ -119,7 +119,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
-                  SHORTURL: ${SHORTURL}
+                  BASE_URL: ${SHORTURL}
                 restart: always
             EOF
 
@@ -168,7 +168,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
-                  SHORTURL: ${SHORTURL}
+                  BASE_URL: ${SHORTURL}
                 restart: always
             EOF
 
