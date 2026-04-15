@@ -1,4 +1,4 @@
-import { createCluster } from "redis";
+const { createCluster } = require("redis");
 
 const redisClient = createCluster({
   rootNodes: [
@@ -8,19 +8,20 @@ const redisClient = createCluster({
   ],
 });
 
-async function connectRedis() {
-  try {
-    await redisClient.connect();
-    console.log("Redis Cluster Connected");
-  } catch (err) {
-    console.error("Redis Connection Error:", err);
-  }
-}
-
-connectRedis();
-
-redisClient.on("error", (err) => {
-  console.error("Redis Error:", err);
+redisClient.on("connect", () => {
+  console.log("✅ Redis Cluster Connected");
 });
 
-export default redisClient;
+redisClient.on("error", (err) => {
+  console.error("❌ Redis Error:", err);
+});
+
+(async () => {
+  try {
+    await redisClient.connect();
+  } catch (err) {
+    console.error("Redis connection failed:", err);
+  }
+})();
+
+module.exports = redisClient;

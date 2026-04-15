@@ -20,10 +20,10 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Original URL is required" });
     }
 
-    // validate URL
+    // Validate URL
     try {
       new URL(originalUrl);
-    } catch (err) {
+    } catch {
       return res.status(400).json({ error: "Invalid URL format" });
     }
 
@@ -34,8 +34,10 @@ router.post("/", authMiddleware, async (req, res) => {
 
     await url.save();
 
-    // CACHE in Redis
-    await redisClient.set(url.shortId, url.originalUrl);
+    // 🔥 Cache in Redis (with TTL)
+    await redisClient.set(url.shortId, url.originalUrl, {
+      EX: 3600, // 1 hour
+    });
 
     res.status(201).json({
       message: "Short URL created successfully",
@@ -43,8 +45,9 @@ router.post("/", authMiddleware, async (req, res) => {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl:
-          `${process.env.SHORT_URL_BASE || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${
+          process.env.SHORT_URL_BASE || "http://localhost:5000"
+        }/${url.shortId}`,
         createdAt: url.createdAt,
         containerId: os.hostname(),
       },
@@ -72,8 +75,9 @@ router.get("/", authMiddleware, async (req, res) => {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl:
-          `${process.env.SHORT_URL_BASE || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${
+          process.env.SHORT_URL_BASE || "http://localhost:5000"
+        }/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
       })),
@@ -85,7 +89,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
 /**
  * =====================
- * GET SINGLE URL (REDIS CACHE ENABLED)
+ * GET SINGLE URL (REDIS CACHE)
  * =====================
  */
 router.get("/:id", authMiddleware, async (req, res) => {
@@ -100,9 +104,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // =====================
-    // CACHE CHECK
-    // =====================
+    // 🔥 Check Redis cache
     const cached = await redisClient.get(url.shortId);
 
     if (cached) {
@@ -112,8 +114,9 @@ router.get("/:id", authMiddleware, async (req, res) => {
           id: url._id,
           originalUrl: cached,
           shortId: url.shortId,
-          shortUrl:
-            `${process.env.SHORT_URL_BASE || "http://localhost:5000"}/${url.shortId}`,
+          shortUrl: `${
+            process.env.SHORT_URL_BASE || "http://localhost:5000"
+          }/${url.shortId}`,
           clicks: url.clicks,
           createdAt: url.createdAt,
           containerId: os.hostname(),
@@ -122,10 +125,10 @@ router.get("/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    // =====================
-    // CACHE MISS → SET CACHE
-    // =====================
-    await redisClient.set(url.shortId, url.originalUrl);
+    // 🔥 Cache miss → store in Redis
+    await redisClient.set(url.shortId, url.originalUrl, {
+      EX: 3600,
+    });
 
     res.status(200).json({
       message: "URL retrieved successfully (CACHE MISS)",
@@ -133,8 +136,9 @@ router.get("/:id", authMiddleware, async (req, res) => {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl:
-          `${process.env.SHORT_URL_BASE || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${
+          process.env.SHORT_URL_BASE || "http://localhost:5000"
+        }/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
         containerId: os.hostname(),
@@ -148,7 +152,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 /**
  * =====================
- * DELETE URL (REMOVE CACHE TOO)
+ * DELETE URL
  * =====================
  */
 router.delete("/:id", authMiddleware, async (req, res) => {
@@ -163,7 +167,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // DELETE FROM REDIS
+    // 🔥 Remove from Redis
     await redisClient.del(url.shortId);
 
     await URLModel.deleteOne({ _id: req.params.id });
