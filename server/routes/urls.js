@@ -68,20 +68,30 @@ router.get("/", authMiddleware, async (req, res) => {
 
     const urls = await URLModel.find({ userId }).sort({ createdAt: -1 });
 
+    const response = await Promise.all(
+      urls.map(async (url) => {
+        const cached = await redisClient.get(url.shortId);
+
+        return {
+          id: url._id,
+          originalUrl: url.originalUrl,
+          shortId: url.shortId,
+          shortUrl: `${process.env.BASE_URL}/${url.shortId}`,
+          clicks: url.clicks,
+          createdAt: url.createdAt,
+
+          // 🔥 CACHE INFO ONLY
+          cacheHit: cached ? true : false
+        };
+      })
+    );
+
     res.status(200).json({
       message: "URLs retrieved successfully",
-      count: urls.length,
-      urls: urls.map((url) => ({
-        id: url._id,
-        originalUrl: url.originalUrl,
-        shortId: url.shortId,
-        shortUrl: `${
-          process.env.SHORTURL || "http://localhost:5000"
-        }/r/${url.shortId}`,   // ✅ FIXED
-        clicks: url.clicks,
-        createdAt: url.createdAt,
-      })),
+      count: response.length,
+      urls: response
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
