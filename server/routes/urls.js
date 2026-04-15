@@ -1,37 +1,39 @@
-
 const os = require('os');
-const instanceName = os.hostname();
 const express = require('express');
 const URLModel = require('../models/URL');
 const authMiddleware = require('../middleware/auth');
+const redisClient = require('../config/redis');
 
 const router = express.Router();
 
-// Create a new short URL (authenticated)
+// =====================
+// CREATE SHORT URL
+// =====================
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { originalUrl } = req.body;
     const userId = req.userId;
 
-    // Validation
     if (!originalUrl) {
       return res.status(400).json({ error: 'Original URL is required' });
     }
 
-    // Check if URL is valid
+    // validate URL
     try {
       new URL(originalUrl);
-    } catch (error) {
+    } catch (err) {
       return res.status(400).json({ error: 'Invalid URL format' });
     }
 
-    // Create new URL entry
     const url = new URLModel({
       originalUrl,
       userId
     });
 
     await url.save();
+
+    // 🔥 CACHE in Redis
+    await redisClient.set(url.shortId, url.originalUrl);
 
     res.status(201).json({
       message: 'Short URL created successfully',
@@ -41,15 +43,19 @@ router.post('/', authMiddleware, async (req, res) => {
         shortId: url.shortId,
         shortUrl: `${process.env.SHORT_URL_BASE || 'http://localhost:5000'}/${url.shortId}`,
         createdAt: url.createdAt,
-      containerId: require('os').hostname()
+        containerId: os.hostname()
       }
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get all short URLs for logged-in user (authenticated)
+
+// =====================
+// GET ALL URLS
+// =====================
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const userId = req.userId;
@@ -68,12 +74,16 @@ router.get('/', authMiddleware, async (req, res) => {
         createdAt: url.createdAt
       }))
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get a specific short URL by ID (authenticated)
+
+// =====================
+// GET SINGLE URL (WITH REDIS)
+// =====================
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const url = await URLModel.findById(req.params.id);
@@ -86,6 +96,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    // 🔥 check cache
+    const cached = await redisClient.get(url.shortId);
+
     res.status(200).json({
       message: 'URL retrieved successfully',
       url: {
@@ -95,16 +108,20 @@ router.get('/:id', authMiddleware, async (req, res) => {
         shortUrl: `${process.env.SHORT_URL_BASE || 'http://localhost:5000'}/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
-          containerId: require('os').hostname(),
-  instanceId: instanceId?.data || "N/A"
+        containerId: os.hostname(),
+        cacheHit: cached ? true : false
       }
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a short URL (authenticated)
+
+// =====================
+// DELETE URL (WITH CACHE DELETE)
+// =====================
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const url = await URLModel.findById(req.params.id);
@@ -117,9 +134,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    // 🔥 delete from redis
+    await redisClient.del(url.shortId);
+
     await URLModel.deleteOne({ _id: req.params.id });
 
     res.status(200).json({ message: 'URL deleted successfully' });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

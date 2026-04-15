@@ -144,6 +144,8 @@ jobs:
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
             MONGO_URI="${{ secrets.MONGO_URI }}"
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            REDIS_PORT="${{ secrets.REDIS_PORT }}"
 
             echo "Deploying to EC2-3"
 
@@ -168,6 +170,8 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
+                  REDIS_HOST="${{ secrets.REDIS_HOST }}"
+                  REDIS_PORT="${{ secrets.REDIS_PORT }}"                  
                 restart: always
             EOF
 
