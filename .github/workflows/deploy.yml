@@ -10,31 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ Docker Login
       - name: Docker Login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3️⃣ Build Backend
       - name: Build Backend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend ./server
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-backend
 
-      # 4️⃣ Build Frontend
       - name: Build Frontend
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend ./client
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
       # ===============================
-      # 🚀 DEPLOY TO EC2-1
+      # 🚀 EC2-1
       # ===============================
       - name: Deploy to EC2-1
         uses: appleboy/ssh-action@v0.1.6
@@ -49,17 +45,15 @@ jobs:
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
             MONGO_URI="${{ secrets.MONGO_URI }}"
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            REDIS_PORT="${{ secrets.REDIS_PORT }}"
 
             echo "Deploying to EC2-1"
-            echo "DOCKER_USERNAME=$DOCKER_USERNAME"
 
-            if ! command -v docker &> /dev/null
-            then
-              sudo apt update
-              sudo apt install -y docker.io docker-compose
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            fi
+            sudo apt update
+            sudo apt install -y docker.io docker-compose || true
+            sudo systemctl start docker
+            sudo systemctl enable docker
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
@@ -74,6 +68,8 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
+                  REDIS_HOST: ${REDIS_HOST}
+                  REDIS_PORT: ${REDIS_PORT}
                 restart: always
             EOF
 
@@ -82,7 +78,7 @@ jobs:
             sudo docker-compose up -d
 
       # ===============================
-      # 🚀 DEPLOY TO EC2-2
+      # 🚀 EC2-2
       # ===============================
       - name: Deploy to EC2-2
         uses: appleboy/ssh-action@v0.1.6
@@ -97,16 +93,15 @@ jobs:
             DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
             MONGO_URI="${{ secrets.MONGO_URI }}"
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
+            REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            REDIS_PORT="${{ secrets.REDIS_PORT }}"
 
             echo "Deploying to EC2-2"
 
-            if ! command -v docker &> /dev/null
-            then
-              sudo apt update
-              sudo apt install -y docker.io docker-compose
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            fi
+            sudo apt update
+            sudo apt install -y docker.io docker-compose || true
+            sudo systemctl start docker
+            sudo systemctl enable docker
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
@@ -121,6 +116,8 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
+                  REDIS_HOST: ${REDIS_HOST}
+                  REDIS_PORT: ${REDIS_PORT}
                 restart: always
             EOF
 
@@ -129,7 +126,7 @@ jobs:
             sudo docker-compose up -d
 
       # ===============================
-      # 🚀 DEPLOY TO EC2-3
+      # 🚀 EC2-3
       # ===============================
       - name: Deploy to EC2-3
         uses: appleboy/ssh-action@v0.1.6
@@ -149,13 +146,10 @@ jobs:
 
             echo "Deploying to EC2-3"
 
-            if ! command -v docker &> /dev/null
-            then
-              sudo apt update
-              sudo apt install -y docker.io docker-compose
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            fi
+            sudo apt update
+            sudo apt install -y docker.io docker-compose || true
+            sudo systemctl start docker
+            sudo systemctl enable docker
 
             mkdir -p ~/url-shortener
             cd ~/url-shortener
@@ -170,8 +164,8 @@ jobs:
                 environment:
                   MONGO_URI: ${MONGO_URI}
                   JWT_SECRET: ${JWT_SECRET}
-                  REDIS_HOST="${{ secrets.REDIS_HOST }}"
-                  REDIS_PORT="${{ secrets.REDIS_PORT }}"                  
+                  REDIS_HOST: ${REDIS_HOST}
+                  REDIS_PORT: ${REDIS_PORT}
                 restart: always
             EOF
 
