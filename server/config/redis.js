@@ -1,27 +1,17 @@
-const { createCluster } = require("redis");
+const { createClient } = require("redis");
 
-const redisClient = createCluster({
-  rootNodes: [
-    {
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-    },
-  ],
+const redisClient = createClient({
+  url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
 });
 
+redisClient.connect();
+
 redisClient.on("connect", () => {
-  console.log("✅ Redis Cluster Connected");
+  console.log("Redis Connected");
 });
 
 redisClient.on("error", (err) => {
-  console.error("❌ Redis Error:", err);
+  console.log("Redis Error", err);
 });
-
-(async () => {
-  try {
-    await redisClient.connect();
-  } catch (err) {
-    console.error("Redis connection failed:", err);
-  }
-})();
 
 module.exports = redisClient;
