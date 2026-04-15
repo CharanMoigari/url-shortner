@@ -34,9 +34,9 @@ router.post("/", authMiddleware, async (req, res) => {
 
     await url.save();
 
-    // 🔥 Cache in Redis (with TTL)
+    // 🔥 Cache in Redis
     await redisClient.set(url.shortId, url.originalUrl, {
-      EX: 3600, // 1 hour
+      EX: 3600,
     });
 
     res.status(201).json({
@@ -46,8 +46,8 @@ router.post("/", authMiddleware, async (req, res) => {
         originalUrl: url.originalUrl,
         shortId: url.shortId,
         shortUrl: `${
-          process.env.SHORT_URL_BASE || "http://localhost:5000"
-        }/${url.shortId}`,
+          process.env.SHORTURL || "http://localhost:5000"
+        }/r/${url.shortId}`,   // ✅ FIXED
         createdAt: url.createdAt,
         containerId: os.hostname(),
       },
@@ -76,8 +76,8 @@ router.get("/", authMiddleware, async (req, res) => {
         originalUrl: url.originalUrl,
         shortId: url.shortId,
         shortUrl: `${
-          process.env.SHORT_URL_BASE || "http://localhost:5000"
-        }/${url.shortId}`,
+          process.env.SHORTURL || "http://localhost:5000"
+        }/r/${url.shortId}`,   // ✅ FIXED
         clicks: url.clicks,
         createdAt: url.createdAt,
       })),
@@ -104,7 +104,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // 🔥 Check Redis cache
+    // 🔥 Check Redis
     const cached = await redisClient.get(url.shortId);
 
     if (cached) {
@@ -115,8 +115,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
           originalUrl: cached,
           shortId: url.shortId,
           shortUrl: `${
-            process.env.SHORT_URL_BASE || "http://localhost:5000"
-          }/${url.shortId}`,
+            process.env.SHORTURL || "http://localhost:5000"
+          }/r/${url.shortId}`,   // ✅ FIXED
           clicks: url.clicks,
           createdAt: url.createdAt,
           containerId: os.hostname(),
@@ -125,7 +125,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
       });
     }
 
-    // 🔥 Cache miss → store in Redis
+    // 🔥 Cache miss → store
     await redisClient.set(url.shortId, url.originalUrl, {
       EX: 3600,
     });
@@ -137,8 +137,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
         originalUrl: url.originalUrl,
         shortId: url.shortId,
         shortUrl: `${
-          process.env.SHORT_URL_BASE || "http://localhost:5000"
-        }/${url.shortId}`,
+          process.env.SHORTURL || "http://localhost:5000"
+        }/r/${url.shortId}`,   // ✅ FIXED
         clicks: url.clicks,
         createdAt: url.createdAt,
         containerId: os.hostname(),

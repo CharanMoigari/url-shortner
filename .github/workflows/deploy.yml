@@ -30,8 +30,9 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/url-shortener-frontend
 
       # ===============================
-      # 🚀 EC2-1
+      # 🚀 EC2 DEPLOY FUNCTION
       # ===============================
+
       - name: Deploy to EC2-1
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -47,8 +48,7 @@ jobs:
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
             REDIS_HOST="${{ secrets.REDIS_HOST }}"
             REDIS_PORT="${{ secrets.REDIS_PORT }}"
-
-            echo "Deploying to EC2-1"
+            SHORTURL="http://url-lb-1871988258.eu-north-1.elb.amazonaws.com"
 
             sudo apt update
             sudo apt install -y docker.io docker-compose || true
@@ -70,6 +70,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
+                  SHORTURL: ${SHORTURL}
                 restart: always
             EOF
 
@@ -80,6 +81,7 @@ jobs:
       # ===============================
       # 🚀 EC2-2
       # ===============================
+
       - name: Deploy to EC2-2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -95,8 +97,7 @@ jobs:
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
             REDIS_HOST="${{ secrets.REDIS_HOST }}"
             REDIS_PORT="${{ secrets.REDIS_PORT }}"
-
-            echo "Deploying to EC2-2"
+            SHORTURL="http://url-lb-1871988258.eu-north-1.elb.amazonaws.com"
 
             sudo apt update
             sudo apt install -y docker.io docker-compose || true
@@ -118,6 +119,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
+                  SHORTURL: ${SHORTURL}
                 restart: always
             EOF
 
@@ -128,6 +130,7 @@ jobs:
       # ===============================
       # 🚀 EC2-3
       # ===============================
+
       - name: Deploy to EC2-3
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -143,8 +146,7 @@ jobs:
             JWT_SECRET="${{ secrets.JWT_SECRET }}"
             REDIS_HOST="${{ secrets.REDIS_HOST }}"
             REDIS_PORT="${{ secrets.REDIS_PORT }}"
-
-            echo "Deploying to EC2-3"
+            SHORTURL="http://url-lb-1871988258.eu-north-1.elb.amazonaws.com"
 
             sudo apt update
             sudo apt install -y docker.io docker-compose || true
@@ -166,6 +168,7 @@ jobs:
                   JWT_SECRET: ${JWT_SECRET}
                   REDIS_HOST: ${REDIS_HOST}
                   REDIS_PORT: ${REDIS_PORT}
+                  SHORTURL: ${SHORTURL}
                 restart: always
             EOF
 
