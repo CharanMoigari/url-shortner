@@ -1,17 +1,26 @@
-const { createClient } = require("redis");
+import { createCluster } from "redis";
 
-const client = createClient({
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT || 6379,
-  },
+const redisClient = createCluster({
+  rootNodes: [
+    {
+      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    },
+  ],
 });
 
-client.on("error", (err) => console.log("Redis Error:", err));
+async function connectRedis() {
+  try {
+    await redisClient.connect();
+    console.log("Redis Cluster Connected");
+  } catch (err) {
+    console.error("Redis Connection Error:", err);
+  }
+}
 
-(async () => {
-  await client.connect();
-  console.log("Redis connected");
-})();
+connectRedis();
 
-module.exports = client;
+redisClient.on("error", (err) => {
+  console.error("Redis Error:", err);
+});
+
+export default redisClient;
