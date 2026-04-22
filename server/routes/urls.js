@@ -2,7 +2,6 @@ const os = require("os");
 const express = require("express");
 const URLModel = require("../models/URL");
 const authMiddleware = require("../middleware/auth");
-const redisClient = require("../config/redis");
 
 const router = express.Router();
 
@@ -27,24 +26,13 @@ router.post("/", authMiddleware, async (req, res) => {
     const url = new URLModel({ originalUrl, userId });
     await url.save();
 
-    // Redis cache (safe)
-    try {
-      if (redisClient.isOpen) {
-        await redisClient.set(url.shortId, url.originalUrl, {
-          EX: 3600,
-        });
-      }
-    } catch (err) {
-      console.log("Redis SET error:", err.message);
-    }
-
     res.status(201).json({
       message: "Short URL created successfully",
       url: {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${process.env.BASE_URL}/${url.shortId}`,
         createdAt: url.createdAt,
         containerId: os.hostname(),
       },
@@ -70,7 +58,7 @@ router.get("/", authMiddleware, async (req, res) => {
         id: url._id,
         originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${process.env.BASE_URL}/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
       })),
@@ -81,7 +69,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 /**
- * GET SINGLE URL (CACHE HIT/MISS)
+ * GET SINGLE URL
  */
 router.get("/:id", authMiddleware, async (req, res) => {
   try {
@@ -95,45 +83,16 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    let cached = null;
-    let cacheHit = false;
-
-    // SAFE REDIS GET
-    try {
-      if (redisClient.isOpen) {
-        cached = await redisClient.get(url.shortId);
-        if (cached) cacheHit = true;
-      }
-    } catch (err) {
-      console.log("Redis GET error:", err.message);
-    }
-
-    // If miss → set cache
-    if (!cacheHit) {
-      try {
-        if (redisClient.isOpen) {
-          await redisClient.set(url.shortId, url.originalUrl, {
-            EX: 3600,
-          });
-        }
-      } catch (err) {
-        console.log("Redis SET error:", err.message);
-      }
-    }
-
     res.status(200).json({
-      message: cacheHit
-        ? "URL retrieved successfully (CACHE HIT)"
-        : "URL retrieved successfully (CACHE MISS)",
+      message: "URL retrieved successfully",
       url: {
         id: url._id,
-        originalUrl: cacheHit ? cached : url.originalUrl,
+        originalUrl: url.originalUrl,
         shortId: url.shortId,
-        shortUrl: `${process.env.BASE_URL || "http://localhost:5000"}/${url.shortId}`,
+        shortUrl: `${process.env.BASE_URL}/${url.shortId}`,
         clicks: url.clicks,
         createdAt: url.createdAt,
         containerId: os.hostname(),
-        cacheHit,
       },
     });
   } catch (error) {
@@ -154,14 +113,6 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
     if (url.userId.toString() !== req.userId) {
       return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    try {
-      if (redisClient.isOpen) {
-        await redisClient.del(url.shortId);
-      }
-    } catch (err) {
-      console.log("Redis DEL error:", err.message);
     }
 
     await URLModel.deleteOne({ _id: req.params.id });
