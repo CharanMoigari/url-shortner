@@ -1,7 +1,6 @@
-// config.js
 const config = {
-  API_URL: "http://url-lb-1871988258.eu-north-1.elb.amazonaws.com/api",
-  BASE_URL: "http://url-lb-1871988258.eu-north-1.elb.amazonaws.com"
+  API_URL: process.env.REACT_APP_API_URL,
+  BASE_URL: process.env.REACT_APP_BASE_URL
 };
 
 export default config;
